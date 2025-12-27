@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class FuelCollectable : MonoBehaviour, IDestroySelf
+public class CoinCollectable : MonoBehaviour, IDestroySelf
 {
     public void DestroySelf()
     {

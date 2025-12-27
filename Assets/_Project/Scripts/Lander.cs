@@ -4,10 +4,20 @@ using UnityEngine.InputSystem;
 
 public class Lander : MonoBehaviour
 {
+    public static Lander Instance { get; private set; }
+
+    public float CurrentFuelAmount { get; private set; }
+
     public event EventHandler OnUpForce;
     public event EventHandler OnLeftForce;
     public event EventHandler OnRightForce;
     public event EventHandler OnBeforeForce;
+    public event EventHandler OnCoinPickup;
+    public event EventHandler<OnLandedEventArgs> OnLanded;
+    public class OnLandedEventArgs : EventArgs
+    {
+        public int score;
+    }
 
     [SerializeField] private float _moveSpeed;
     [SerializeField] private float _rotateSpeed;
@@ -17,15 +27,21 @@ public class Lander : MonoBehaviour
     private Rigidbody2D _rb;
     private GameInput _gameInput;
     private InputAction _moveAction;
-    private float _currentFuelAmount;
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+
         _rb = GetComponent<Rigidbody2D>();
 
         _gameInput = new();
         _moveAction = _gameInput.Gameplay.Move;
-        _currentFuelAmount = _maxFuelAmount;
+        CurrentFuelAmount = _maxFuelAmount;
     }
 
     private void OnEnable()
@@ -37,7 +53,7 @@ public class Lander : MonoBehaviour
     {
         OnBeforeForce?.Invoke(this, EventArgs.Empty);
 
-        if (_currentFuelAmount <= 0f)
+        if (CurrentFuelAmount <= 0f)
             return;
 
         if (AnyThrustInputPressed())
@@ -104,15 +120,37 @@ public class Lander : MonoBehaviour
         int score = Mathf.RoundToInt((landingAngleScore + landingSpeedScore) * landingPad.ScoreMultiplier);
 
         print($"Score: {score}");
+        OnLanded?.Invoke(this, new OnLandedEventArgs
+        {
+            score = score
+        });
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject.TryGetComponent(out FuelCollectable fuelCollectable))
-        {
-            _currentFuelAmount = _maxFuelAmount;
-            fuelCollectable.DestroySelf();
-        }
+            CurrentFuelAmount = _maxFuelAmount;
+
+        if (collision.gameObject.TryGetComponent(out CoinCollectable coinCollectable))
+            OnCoinPickup?.Invoke(this, EventArgs.Empty);
+
+        if (collision.gameObject.TryGetComponent(out IDestroySelf destroyableObject))
+            destroyableObject.DestroySelf();
+    }
+
+    public float GetSpeedX()
+    {
+        return _rb.linearVelocityX;
+    }
+
+    public float GetSpeedY()
+    {
+        return _rb.linearVelocityY;
+    }
+
+    public float GetFuelAmountNormalized()
+    {
+        return CurrentFuelAmount / _maxFuelAmount;
     }
 
     private void SetupInput()
@@ -126,7 +164,7 @@ public class Lander : MonoBehaviour
     private void ConsumeFuel()
     {
         float fuelConsumptionAmount = 1f;
-        _currentFuelAmount -= fuelConsumptionAmount * Time.deltaTime;
+        CurrentFuelAmount -= fuelConsumptionAmount * Time.deltaTime;
     }
 
     private bool AnyThrustInputPressed()
