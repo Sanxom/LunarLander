@@ -16,7 +16,19 @@ public class Lander : MonoBehaviour
     public event EventHandler<OnLandedEventArgs> OnLanded;
     public class OnLandedEventArgs : EventArgs
     {
+        public LandingType landingType;
+        public float dotVector;
+        public float landingSpeed;
+        public float scoreMultiplier;
         public int score;
+    }
+
+    public enum LandingType
+    {
+        Success,
+        WrongLandingArea,
+        TooSteepAngle,
+        TooFastLanding,
     }
 
     [SerializeField] private float _moveSpeed;
@@ -86,6 +98,14 @@ public class Lander : MonoBehaviour
         if (!collision.gameObject.TryGetComponent(out LandingPad landingPad))
         {
             print("Crashed on Terrain");
+            OnLanded?.Invoke(this, new OnLandedEventArgs
+            {
+                landingType = LandingType.WrongLandingArea,
+                dotVector = 0f,
+                landingSpeed = 0f,
+                scoreMultiplier = 0f,
+                score = 0,
+            });
             return;
         }
 
@@ -94,7 +114,15 @@ public class Lander : MonoBehaviour
         if (relativeVelocityMagnitude > _softLandingVelocityMagnitude)
         {
             // Crashed
-            print("Landed too fast.");
+            print("Landed too hard.");
+            OnLanded?.Invoke(this, new OnLandedEventArgs
+            {
+                landingType = LandingType.TooFastLanding,
+                dotVector = 0f,
+                landingSpeed = relativeVelocityMagnitude,
+                scoreMultiplier = 0f,
+                score = 0,
+            });
             return;
         }
 
@@ -103,7 +131,15 @@ public class Lander : MonoBehaviour
         if (dotVector < minDotVector)
         {
             // Landed too steeply
-            print("Landed at a bad angle.");
+            print("Landed on too steep of an angle.");
+            OnLanded?.Invoke(this, new OnLandedEventArgs
+            {
+                landingType = LandingType.TooSteepAngle,
+                dotVector = dotVector,
+                landingSpeed = relativeVelocityMagnitude,
+                scoreMultiplier = 0f,
+                score = 0,
+            });
             return;
         }
 
@@ -122,7 +158,11 @@ public class Lander : MonoBehaviour
         print($"Score: {score}");
         OnLanded?.Invoke(this, new OnLandedEventArgs
         {
-            score = score
+            landingType = LandingType.Success,
+            dotVector = dotVector,
+            landingSpeed = relativeVelocityMagnitude,
+            scoreMultiplier = landingPad.ScoreMultiplier,
+            score = score,
         });
     }
 
