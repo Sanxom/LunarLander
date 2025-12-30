@@ -10,11 +10,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 221656903656114778, guid: 198532cd05ad2ab428436c7850ca2e5b, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 15.63
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 221656903656114778, guid: 198532cd05ad2ab428436c7850ca2e5b, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.27
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 221656903656114778, guid: 198532cd05ad2ab428436c7850ca2e5b, type: 3}
       propertyPath: m_LocalPosition.z
@@ -72,9 +72,15 @@ PrefabInstance:
       propertyPath: m_LocalScale.z
       value: 0.4
       objectReference: {fileID: 0}
+    - target: {fileID: 3367436185938457177, guid: 198532cd05ad2ab428436c7850ca2e5b, type: 3}
+      propertyPath: m_text
+      value: 'x10
+
+'
+      objectReference: {fileID: 0}
     - target: {fileID: 7012377829968274972, guid: 198532cd05ad2ab428436c7850ca2e5b, type: 3}
       propertyPath: m_Name
-      value: Landing Pad x5
+      value: Landing Pad x10
       objectReference: {fileID: 0}
     - target: {fileID: 7645467901107275349, guid: 198532cd05ad2ab428436c7850ca2e5b, type: 3}
       propertyPath: m_Size.x
@@ -98,7 +104,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7742539559304330459, guid: 198532cd05ad2ab428436c7850ca2e5b, type: 3}
       propertyPath: <ScoreMultiplier>k__BackingField
-      value: 5
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

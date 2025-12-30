@@ -6,29 +6,36 @@ public class LanderVisuals : MonoBehaviour
     [SerializeField] private ParticleSystem _leftThrusterParticleSystem;
     [SerializeField] private ParticleSystem _middleThrusterParticleSystem;
     [SerializeField] private ParticleSystem _rightThrusterParticleSystem;
+    [SerializeField] private GameObject _landerExplosionVFX;
 
-    private Lander lander;
+    private Lander _lander;
 
     private void Awake()
     {
-        lander = GetComponent<Lander>();
+        _lander = GetComponent<Lander>();
 
-        lander.OnBeforeForce += Lander_OnBeforeForce;
-        lander.OnUpForce += Lander_OnUpForce;
-        lander.OnLeftForce += Lander_OnLeftForce;
-        lander.OnRightForce += Lander_OnRightForce;
+        _lander.OnBeforeForce += Lander_OnBeforeForce;
+        _lander.OnUpForce += Lander_OnUpForce;
+        _lander.OnLeftForce += Lander_OnLeftForce;
+        _lander.OnRightForce += Lander_OnRightForce;
 
         SetEnableThrusterParticleSystem(_leftThrusterParticleSystem, false);
         SetEnableThrusterParticleSystem(_middleThrusterParticleSystem, false);
         SetEnableThrusterParticleSystem(_rightThrusterParticleSystem, false);
     }
 
-    private void OnDisable()
+    private void Start()
     {
-        lander.OnBeforeForce -= Lander_OnBeforeForce;
-        lander.OnUpForce -= Lander_OnUpForce;
-        lander.OnLeftForce -= Lander_OnLeftForce;
-        lander.OnRightForce -= Lander_OnRightForce;
+        _lander.OnLanded += Lander_OnLanded;
+    }
+
+    private void OnDestroy()
+    {
+        _lander.OnBeforeForce -= Lander_OnBeforeForce;
+        _lander.OnUpForce -= Lander_OnUpForce;
+        _lander.OnLeftForce -= Lander_OnLeftForce;
+        _lander.OnRightForce -= Lander_OnRightForce;
+        _lander.OnLanded -= Lander_OnLanded;
     }
 
     private void Lander_OnBeforeForce(object sender, System.EventArgs e)
@@ -53,6 +60,23 @@ public class LanderVisuals : MonoBehaviour
     private void Lander_OnRightForce(object sender, System.EventArgs e)
     {
         SetEnableThrusterParticleSystem(_leftThrusterParticleSystem, true);
+    }
+
+    private void Lander_OnLanded(object sender, Lander.OnLandedEventArgs e)
+    {
+        switch (e.landingType)
+        {
+            case Lander.LandingType.Success:
+                break;
+            case Lander.LandingType.WrongLandingArea:
+            case Lander.LandingType.TooSteepAngle:
+            case Lander.LandingType.TooFastLanding:
+                Instantiate(_landerExplosionVFX, transform.position, Quaternion.identity);
+                gameObject.SetActive(false);
+                break;
+            default:
+                break;
+        }
     }
 
     private void SetEnableThrusterParticleSystem(ParticleSystem particleSystem, bool enabled)

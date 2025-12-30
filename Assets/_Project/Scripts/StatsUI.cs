@@ -21,7 +21,7 @@ public class StatsUI : MonoBehaviour
         SetArrows();
         _fuelImage.fillAmount = Lander.Instance.GetFuelAmountNormalized();
         _statsText.text = 
-            $"{GameManager.Instance.Score}\n {GameManager.Instance.TimeAmount: 0}\n{Mathf.Abs(Lander.Instance.GetSpeedX()): 0}\n{Mathf.Abs(Lander.Instance.GetSpeedY()): 0}";
+            $"{GameManager.Instance.GetLevelNumber()}\n{GameManager.Instance.Score}\n{GameManager.Instance.TimeAmount:0}\n{Mathf.Abs(Lander.Instance.GetSpeedX()):0}\n{Mathf.Abs(Lander.Instance.GetSpeedY()):0}";
     }
 
     private void SetArrows()

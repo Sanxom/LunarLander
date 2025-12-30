@@ -1,4 +1,8 @@
+using System;
+using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -6,6 +10,11 @@ public class GameManager : MonoBehaviour
 
     public float TimeAmount { get; private set; }
     public int Score { get; private set; }
+    public bool IsTimerActive { get; private set; }
+
+    [SerializeField] private List<GameLevel> _gameLevelList;
+
+    private static int _levelNumber = 1;
 
     private void Awake()
     {
@@ -22,10 +31,15 @@ public class GameManager : MonoBehaviour
     {
         Lander.Instance.OnCoinPickup += Lander_OnCoinPickup;
         Lander.Instance.OnLanded += Lander_OnLanded;
+        Lander.Instance.OnStateChanged += Lander_OnStateChanged;
+
+        LoadCurrentLevel();
     }
 
     private void Update()
     {
+        if (!IsTimerActive) return;
+
         TimeAmount += Time.deltaTime;
     }
 
@@ -33,6 +47,34 @@ public class GameManager : MonoBehaviour
     {
         Lander.Instance.OnCoinPickup -= Lander_OnCoinPickup;
         Lander.Instance.OnLanded -= Lander_OnLanded;
+        Lander.Instance.OnStateChanged -= Lander_OnStateChanged;
+    }
+
+    public int GetLevelNumber() => _levelNumber;
+
+    public void AddScore(int addScoreAmount)
+    {
+        Score += addScoreAmount;
+    }
+
+    public void RestartLevel()
+    {
+        SceneManager.LoadScene(0);
+    }
+
+    public void GoToNextLevel()
+    {
+        _levelNumber++;
+
+        if (_levelNumber > _gameLevelList.Count)
+        {
+#if UNITY_EDITOR
+            EditorApplication.isPlaying = false; // TODO: Change this to Main Menu or something
+#else
+            Application.Quit();
+#endif
+        }
+        SceneManager.LoadScene(0);
     }
 
     private void Lander_OnLanded(object sender, Lander.OnLandedEventArgs e)
@@ -45,9 +87,20 @@ public class GameManager : MonoBehaviour
         AddScore(500); 
     }
 
-    public void AddScore(int addScoreAmount)
+    private void Lander_OnStateChanged(object sender, Lander.OnStateChangedEventArgs e)
     {
-        Score += addScoreAmount;
-        print(Score);
+        IsTimerActive = e.state == Lander.State.Normal;
+    }
+
+    private void LoadCurrentLevel()
+    {
+        foreach (GameLevel gameLevel in _gameLevelList)
+        {
+            if (gameLevel.LevelNumber == _levelNumber)
+            {
+                GameLevel spawnedGameLevel = Instantiate(gameLevel, Vector3.zero, Quaternion.identity);
+                Lander.Instance.transform.position = spawnedGameLevel.LanderStartPosition.position;
+            }
+        }
     }
 }
