@@ -51,8 +51,6 @@ public class Lander : MonoBehaviour
     private const float GRAVITY_NORMAL = 0.7f;
 
     private Rigidbody2D _rb;
-    private GameInput _gameInput;
-    private InputAction _moveAction;
     private State _state;
 
     private void Awake()
@@ -67,15 +65,8 @@ public class Lander : MonoBehaviour
         _rb = GetComponent<Rigidbody2D>();
         _rb.gravityScale = 0f;
 
-        _gameInput = new();
-        _moveAction = _gameInput.Gameplay.Move;
         CurrentFuelAmount = _maxFuelAmount;
         _state = State.WaitingToStart;
-    }
-
-    private void OnEnable()
-    {
-        _gameInput.Enable();
     }
 
     private void FixedUpdate()
@@ -98,17 +89,18 @@ public class Lander : MonoBehaviour
                 if (AnyThrustInputPressed())
                     ConsumeFuel();
 
-                if (Keyboard.current.wKey.isPressed)
+                float gamepadDeadzone = 0.2f;
+                if (GameInputManager.Instance.IsUpActionPressed() || GameInputManager.Instance.GetMoveInputVector().y > gamepadDeadzone)
                 {
                     _rb.AddForce(_moveSpeed * Time.deltaTime * transform.up);
                     OnUpForce?.Invoke(this, EventArgs.Empty);
                 }
-                if (Keyboard.current.aKey.isPressed)
+                if (GameInputManager.Instance.IsLeftActionPressed() || GameInputManager.Instance.GetMoveInputVector().x < -gamepadDeadzone)
                 {
                     _rb.AddTorque(_rotateSpeed * Time.deltaTime);
                     OnLeftForce?.Invoke(this, EventArgs.Empty);
                 }
-                if (Keyboard.current.dKey.isPressed)
+                if (GameInputManager.Instance.IsRightActionPressed() || GameInputManager.Instance.GetMoveInputVector().x > gamepadDeadzone)
                 {
                     _rb.AddTorque(-_rotateSpeed * Time.deltaTime);
                     OnRightForce?.Invoke(this, EventArgs.Empty);
@@ -119,11 +111,6 @@ public class Lander : MonoBehaviour
             default:
                 break;
         }
-    }
-
-    private void OnDisable()
-    {
-        _gameInput.Disable();
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -227,14 +214,6 @@ public class Lander : MonoBehaviour
         return CurrentFuelAmount / _maxFuelAmount;
     }
 
-    private void SetupInput()
-    {
-    }
-
-    private void InputUnsubscribe()
-    {
-    }
-
     private void ConsumeFuel()
     {
         float fuelConsumptionAmount = 1f;
@@ -243,7 +222,10 @@ public class Lander : MonoBehaviour
 
     private bool AnyThrustInputPressed()
     {
-        return Keyboard.current.wKey.isPressed || Keyboard.current.aKey.isPressed || Keyboard.current.dKey.isPressed;
+        return GameInputManager.Instance.IsUpActionPressed() 
+            || GameInputManager.Instance.IsLeftActionPressed() 
+            || GameInputManager.Instance.IsRightActionPressed()
+            || GameInputManager.Instance.GetMoveInputVector() != Vector2.zero;
     }
 
     private void SetState(State state)

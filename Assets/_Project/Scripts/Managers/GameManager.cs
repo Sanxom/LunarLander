@@ -9,6 +9,9 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
+    public event EventHandler OnGamePaused;
+    public event EventHandler OnGameUnpaused;
+
     [field: SerializeField] public CinemachineCamera CinemachineCamera { get; private set; }
 
     public float TimeAmount { get; private set; }
@@ -19,6 +22,13 @@ public class GameManager : MonoBehaviour
     [SerializeField] private List<GameLevel> _gameLevelList;
 
     private static int _levelNumber = 1;
+    private static int _totalScore = 0;
+
+    public static void ResetStaticData()
+    {
+        _levelNumber = 1;
+        _totalScore = 0;
+    }
 
     private void Awake()
     {
@@ -36,6 +46,7 @@ public class GameManager : MonoBehaviour
         Lander.Instance.OnCoinPickup += Lander_OnCoinPickup;
         Lander.Instance.OnLanded += Lander_OnLanded;
         Lander.Instance.OnStateChanged += Lander_OnStateChanged;
+        GameInputManager.Instance.OnMenuButtonPressed += GameInputManager_OnMenuButtonPressed;
 
         LoadCurrentLevel();
     }
@@ -52,33 +63,51 @@ public class GameManager : MonoBehaviour
         Lander.Instance.OnCoinPickup -= Lander_OnCoinPickup;
         Lander.Instance.OnLanded -= Lander_OnLanded;
         Lander.Instance.OnStateChanged -= Lander_OnStateChanged;
+        GameInputManager.Instance.OnMenuButtonPressed -= GameInputManager_OnMenuButtonPressed;
     }
 
     public int GetLevelNumber() => _levelNumber;
+    public int GetTotalScore() => _totalScore;
 
     public void AddScore(int addScoreAmount)
     {
         Score += addScoreAmount;
     }
 
+    public void PauseGame()
+    {
+        Time.timeScale = 0f;
+        OnGamePaused?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void UnpauseGame()
+    {
+        Time.timeScale = 1f;
+        OnGameUnpaused?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void PauseUnpauseGame()
+    {
+        if (Time.timeScale == 1f)
+            PauseGame();
+        else
+            UnpauseGame();
+    }
+
     public void RestartLevel()
     {
-        SceneManager.LoadScene(0);
+        SceneLoader.LoadScene(SceneLoader.Scene.Game);
     }
 
     public void GoToNextLevel()
     {
         _levelNumber++;
+        _totalScore += Score;
 
-        if (_levelNumber > _gameLevelList.Count)
-        {
-#if UNITY_EDITOR
-            EditorApplication.isPlaying = false; // TODO: Change this to Main Menu or something
-#else
-            Application.Quit();
-#endif
-        }
-        SceneManager.LoadScene(0);
+        if (GetGameLevel() == null)
+            SceneLoader.LoadScene(SceneLoader.Scene.GameOver);
+        else
+            SceneLoader.LoadScene(SceneLoader.Scene.Game);
     }
 
     private void Lander_OnLanded(object sender, Lander.OnLandedEventArgs e)
@@ -102,17 +131,25 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    private void GameInputManager_OnMenuButtonPressed(object sender, EventArgs e) => PauseUnpauseGame();
+
     private void LoadCurrentLevel()
+    {
+        GameLevel gameLevel = GetGameLevel();
+        GameLevel spawnedGameLevel = Instantiate(gameLevel, Vector3.zero, Quaternion.identity);
+        Lander.Instance.transform.position = spawnedGameLevel.LanderStartPosition.position;
+        CinemachineCamera.Target.TrackingTarget = spawnedGameLevel.CameraStartTarget;
+        CinemachineCameraZoom2D.Instance.SetTargetOrthographicSize(spawnedGameLevel.ZoomedOutOrthographicSize);
+    }
+
+    private GameLevel GetGameLevel()
     {
         foreach (GameLevel gameLevel in _gameLevelList)
         {
             if (gameLevel.LevelNumber == _levelNumber)
-            {
-                GameLevel spawnedGameLevel = Instantiate(gameLevel, Vector3.zero, Quaternion.identity);
-                Lander.Instance.transform.position = spawnedGameLevel.LanderStartPosition.position;
-                CinemachineCamera.Target.TrackingTarget = spawnedGameLevel.CameraStartTarget;
-                CinemachineCameraZoom2D.Instance.SetTargetOrthographicSize(spawnedGameLevel.ZoomedOutOrthographicSize);
-            }
+                return gameLevel;
         }
+
+        return null;
     }
 }
