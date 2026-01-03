@@ -35,6 +35,7 @@ public class Lander : MonoBehaviour
         WrongLandingArea,
         TooSteepAngle,
         TooFastLanding,
+        CargoCrashed,
     }
 
     public enum State
@@ -44,6 +45,7 @@ public class Lander : MonoBehaviour
         GameOver,
     }
 
+    [SerializeField] private Transform _cargoRopePrefab;
     [SerializeField] private float _moveSpeed;
     [SerializeField] private float _rotateSpeed;
     [SerializeField] private float _softLandingVelocityMagnitude = 3f;
@@ -52,6 +54,7 @@ public class Lander : MonoBehaviour
     private const float GRAVITY_NORMAL = 0.7f;
 
     private Rigidbody2D _rb;
+    private Transform _cargoRope;
     private State _state;
 
     private void Awake()
@@ -216,6 +219,30 @@ public class Lander : MonoBehaviour
     public float GetFuelAmountNormalized()
     {
         return CurrentFuelAmount / _maxFuelAmount;
+    }
+
+    public void PickUpCargo()
+    {
+        _cargoRope = Instantiate(_cargoRopePrefab, transform);
+    }
+
+    public void DropCargo()
+    {
+        if (_cargoRope != null)
+            Destroy(_cargoRope.gameObject);
+    }
+
+    public void CargoCrashed()
+    {
+        OnLanded?.Invoke(this, new OnLandedEventArgs
+        {
+            landingType = LandingType.CargoCrashed,
+            dotVector = 0f,
+            landingSpeed = 0f,
+            scoreMultiplier = 0f,
+            score = 0,
+        });
+        SetState(State.GameOver);
     }
 
     private void ConsumeFuel()

@@ -2971,6 +2971,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e7775a38870e284b8f4c06ea123a007, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Lander
+  _cargoRopePrefab: {fileID: 7746688448356057739, guid: 66571a2d77f65004093e8ba3e82810dc, type: 3}
   _moveSpeed: 700
   _rotateSpeed: 100
   _softLandingVelocityMagnitude: 3

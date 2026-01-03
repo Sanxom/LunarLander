@@ -71,6 +71,7 @@ public class LanderVisuals : MonoBehaviour
             case Lander.LandingType.WrongLandingArea:
             case Lander.LandingType.TooSteepAngle:
             case Lander.LandingType.TooFastLanding:
+            case Lander.LandingType.CargoCrashed:
                 Instantiate(_landerExplosionVFX, transform.position, Quaternion.identity);
                 gameObject.SetActive(false);
                 break;
